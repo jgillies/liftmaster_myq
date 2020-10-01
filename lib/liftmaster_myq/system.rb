@@ -10,18 +10,19 @@ module LiftmasterMyq
   	@@failed_endpoint_discovery_count = 0
   	
   	def initialize(user, pass)
-  		@username = URI.encode(user)
-  		@password = URI.encode(pass)
-  		login
+  		login(user, pass)
+                request_account
+                # request_device_list
   		discover_endpoints
   	end
 
   	def discover_endpoints
   		empty_device_arrays
   		response = request_device_list
-  		devices = response["Devices"]
+  		devices = response["items"]
   		devices.each do |device|
- 				instantiate_device(device)
+                  puts device["name"]
+                  instantiate_device(device)
   		end
   		if @gateways.size > 0
   			@@failed_endpoint_discovery_count = 0
@@ -55,13 +56,15 @@ module LiftmasterMyq
 
   	def login_uri
   		uri = "https://#{LiftmasterMyq::HOST_URI}/"
-			uri << "#{LiftmasterMyq::LOGIN_ENDPOINT}"
-			uri << "?appId=#{LiftmasterMyq::APP_ID}"
-			uri << "&securityToken=null"
-			uri << "&username=#{@username}"
-			uri << "&password=#{@password}"
-  		uri << "&culture=#{LiftmasterMyq::LOCALE}"
+                uri << "#{LiftmasterMyq::API_VERSION}/"
+                uri << "#{LiftmasterMyq::LOGIN_ENDPOINT}"
   	end
+
+        def get_account_uri
+  		uri = "https://#{LiftmasterMyq::HOST_URI}/"
+                uri << "#{LiftmasterMyq::API_VERSION}/"
+                uri << "#{LiftmasterMyq::ACCOUNT_ENDPOINT}"
+        end
 
   	def device_list_uri
   		uri = "https://#{LiftmasterMyq::HOST_URI}/"
@@ -70,18 +73,44 @@ module LiftmasterMyq
   		uri << "&securityToken=#{@security_token}"
   	end
 
-  	def login
-  		response = HTTParty.get(login_uri)
-  		puts response
-  		response = response.parsed_response
-  		@userId = response["UserId"]
-  		@security_token = response["SecurityToken"]
-  		@cached_login_response = response
-  		"logged in successfully"
+  	def login(username, password)
+                
+                options = {
+                    headers: LiftmasterMyq::HEADERS,
+                    body: {username: username, password: password}.to_json,
+                    format: :json,
+                    # debug_output: STDOUT
+                }
+
+  		response = HTTParty.post(login_uri, options)
+                @security_token = response["SecurityToken"]
+                @headers = LiftmasterMyq::HEADERS.merge!(SecurityToken: @security_token)
+  		# @cached_login_response = response
+  		# "logged in successfully"
   	end
 
+        def request_account
+                options = {
+                    headers: @headers,
+                    body: {expand: "account"}.to_json,
+                    format: :json,
+                    # debug_output: STDOUT
+                }
+
+            response = HTTParty.get(get_account_uri, options)
+            @account_uri = response["Account"]["href"].gsub(/v5/,'v5.1')
+        end
+
   	def request_device_list
-  		HTTParty.get(device_list_uri).parsed_response
+            uri = "#{@account_uri}/#{LiftmasterMyq::DEVICE_LIST_ENDPOINT}"
+
+            options = {
+                headers: @headers,
+                format: :json,
+                # debug_output: STDOUT
+            }
+
+            response = HTTParty.get(uri, options)
   	end
 
   	def empty_device_arrays
@@ -91,9 +120,9 @@ module LiftmasterMyq
   	end
 
   	def instantiate_device(device)
-  		 	if device["MyQDeviceTypeName"] == "GarageDoorOpener"
+  		 	if device["device_type"] == "garagedooropener"
   				@garage_doors << LiftmasterMyq::Device::GarageDoor.new(device, self)
-  			elsif device["MyQDeviceTypeName"] == "Gateway"
+  			elsif device["device_type"] == "hub"
   		 		@gateways << LiftmasterMyq::Device::Gateway.new(device, self)
   			#elsif device["MyQDeviceTypeName"]=="???"
   				# I need a MyQ light switch to implement this feature
