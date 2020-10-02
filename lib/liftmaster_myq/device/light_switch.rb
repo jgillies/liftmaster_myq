@@ -1,16 +1,15 @@
+# frozen_string_literal: true
+
 require 'liftmaster_myq/device'
 
-module LiftmasterMyq::Device
-  class LightSwitch < Base
+module LiftmasterMyq
+  module Device
+    class LightSwitch < Base
+      def on; end
 
-  	def on
-  	end
-  	
-  	def off
-  	end
-    
-    def status
+      def off; end
+
+      def status; end
     end
-
   end
 end

@@ -1,72 +1,44 @@
+# frozen_string_literal: true
+
 require 'liftmaster_myq/device'
 
-module LiftmasterMyq::Device
-  class GarageDoor < Base
+module LiftmasterMyq
+  module Device
+    class GarageDoor
+      def initialize(device)
+        @device = device
+      end
 
-    attr_accessor :gateway
+      def name
+        @device['name']
+      end
 
-    def initialize(device_hash, parent_system)
-      super
-      @gateway = device_hash["ParentMyQDeviceId"]
-    end
+      def open
+        change_door_state('open')
+      end
 
-    def open
-      change_door_state("open")
-    end
+      def close
+        change_door_state('close')
+      end
 
-    def close
-      change_door_state("close")
-    end
+      def status
+        @device['state']['door_state']
+      end
 
-    def status
-      response = check_door_state("doorstate").parsed_response
-      state = response["AttributeValue"]
-      if state == "1"
-        return "open"
-      elsif state == "2"
-        return "closed"
-      elsif state == "4"
-        return "opening"
-      elsif state == "5"
-        return "closing"
-      else
-        return "#{state} is an unknown state for the door."
+      def status_since
+        @device['state']['last_update']
+      end
+
+      private
+
+      def change_door_state(command)
+        device_uri = @device['href']
+        HTTParty.put(device_uri,
+                     body: {
+                       action_type: command
+                     },
+                     headers: @headers)
       end
     end
-
-    private
-
-    def change_door_state_uri
-      uri = "https://#{LiftmasterMyq::HOST_URI}/"
-      uri << "#{LiftmasterMyq::DEVICE_SET_ENDPOINT}"
-    end
-
-    def check_door_state_uri(command)
-      uri = "https://#{LiftmasterMyq::HOST_URI}/"
-      uri << "#{LiftmasterMyq::DEVICE_STATUS_ENDPOINT}"
-      uri << "?appId=#{LiftmasterMyq::APP_ID}"
-      uri << "&securityToken=#{self.parent_system.security_token}"
-      uri << "&devId=#{self.id}"
-      uri << "&name=#{command}"
-    end
-
-    def change_door_state(command)
-      open_close_state = command.to_s.downcase == "open" ? 1 : 0
-      HTTParty.put(change_door_state_uri,
-        :body => {
-          :AttributeName  => "desireddoorstate",
-          :DeviceId       => self.id,
-          :ApplicationId  => LiftmasterMyq::APP_ID,
-          :AttributeValue => open_close_state,
-          :SecurityToken  => self.parent_system.security_token
-        }
-      )
-    end
-
-    def check_door_state(command)
-      uri = check_door_state_uri(command)
-      HTTParty.get(uri)
-    end
-
   end
 end
