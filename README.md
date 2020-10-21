@@ -1,13 +1,14 @@
-# LiftmasterMyq
+# RubyMyq
 
-Ruby gem to control a Chaimberlain Liftmaster MyQ system.
-Partial documentation of the API is available at http://docs.unofficialliftmastermyq.apiary.io/
+Ruby gem to control a Chamberlain MyQ system.
+
+This is a forked version of https://github.com/pfeffed/liftmaster_myq, with updates for API changes.
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
-    gem 'liftmaster_myq'
+    gem 'ruby_myq'
 
 And then execute:
 
@@ -15,22 +16,21 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install liftmaster_myq-X.X.X.gem (Note: X.X.X should be changed to the current version number)
+    $ gem install ruby_myq-X.X.X.gem (Note: X.X.X should be changed to the current version number)
 
 ## Usage
 
 To create the gem:
 
-	$ gem build /path/to/liftmaster_myq/liftmaster_myq.gemspec
+	$ gem build /path/to/ruby_myq/ruby_myq.gemspec
 
 To instantiate the system:
 
-	$ require 'liftmaster_myq'
-	$ system = LiftmasterMyq::System.new('your_username','your_password')
+	$ require 'ruby_myq'
+	$ system = RubyMyq::System.new('your_username','your_password')
 
 To see your device list in all it's ruby glory:
 
-	$ system.gateways
 	$ system.garage_doors
 	$ system.garage_doors.count
 

@@ -5,6 +5,7 @@ require 'httparty'
 
 module RubyMyq
   class System
+    attr_reader :garage_doors
     def initialize(user, pass)
       @username = user
       @password = pass
