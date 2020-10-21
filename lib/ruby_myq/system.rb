@@ -3,13 +3,8 @@
 require 'uri'
 require 'httparty'
 
-module LiftmasterMyq
+module RubyMyq
   class System
-    attr_reader :username, :password, :garage_doors, :gateways,
-                :lights, :security_token, :userId, :cached_login_response
-
-    @@failed_endpoint_discovery_count = 0
-
     def initialize(user, pass)
       @username = user
       @password = pass
@@ -23,19 +18,8 @@ module LiftmasterMyq
       response = request_device_list
       devices = response['items']
       devices.each do |device|
-        instantiate_device(device)
+        instantiate_device(device, @headers)
       end
-      #	if @gateways.size > 0
-      #		@@failed_endpoint_discovery_count = 0
-      #		return "endpoint discovery complete"
-      #	elsif @@failed_endpoint_discovery_count < 3
-      #		@@failed_endpoint_discovery_count += 1
-      #		sleep 15
-      #                login(@username, @password)
-      #		discover_endpoints
-      #	else
-      #		raise RuntimeError, "The Liftmaster MyQ API failed to return any devices under your account"
-      # end
     end
 
     def find_door_by_id(id)
@@ -56,27 +40,22 @@ module LiftmasterMyq
     # private
 
     def login_uri
-      uri = "https://#{LiftmasterMyq::HOST_URI}/"
-      uri << "#{LiftmasterMyq::API_VERSION}/"
-      uri << LiftmasterMyq::LOGIN_ENDPOINT.to_s
+      uri = ''.dup
+      uri << "https://#{RubyMyq::HOST_URI}/"
+      uri << "#{RubyMyq::API_VERSION}/"
+      uri << RubyMyq::LOGIN_ENDPOINT
     end
 
     def request_account_uri
-      uri = "https://#{LiftmasterMyq::HOST_URI}/"
-      uri << "#{LiftmasterMyq::API_VERSION}/"
-      uri << LiftmasterMyq::ACCOUNT_ENDPOINT.to_s
-    end
-
-    def device_list_uri
-      uri = "https://#{LiftmasterMyq::HOST_URI}/"
-      uri << LiftmasterMyq::DEVICE_LIST_ENDPOINT.to_s
-      uri << "?appId=#{LiftmasterMyq::APP_ID}"
-      uri << "&securityToken=#{@security_token}"
+      uri = ''.dup
+      uri << "https://#{RubyMyq::HOST_URI}/"
+      uri << "#{RubyMyq::API_VERSION}/"
+      uri << RubyMyq::ACCOUNT_ENDPOINT
     end
 
     def login(username, password)
       options = {
-        headers: LiftmasterMyq::HEADERS,
+        headers: RubyMyq::HEADERS,
         body: { username: username, password: password }.to_json,
         format: :json
         # debug_output: STDOUT
@@ -84,7 +63,9 @@ module LiftmasterMyq
 
       response = HTTParty.post(login_uri, options)
       @security_token = response['SecurityToken']
-      @headers = LiftmasterMyq::HEADERS.merge!(SecurityToken: @security_token)
+      @headers = {}.dup
+      @headers.merge!(RubyMyq::HEADERS)
+      @headers.merge!(SecurityToken: @security_token)
       # @cached_login_response = response
       # "logged in successfully"
     end
@@ -102,7 +83,7 @@ module LiftmasterMyq
     end
 
     def request_device_list
-      uri = "#{@account_uri}/#{LiftmasterMyq::DEVICE_LIST_ENDPOINT}"
+      uri = "#{@account_uri}/#{RubyMyq::DEVICE_LIST_ENDPOINT}"
 
       options = {
         headers: @headers,
@@ -119,14 +100,14 @@ module LiftmasterMyq
       @lights = []
     end
 
-    def instantiate_device(device)
+    def instantiate_device(device, _headers)
       if device['device_type'] == 'garagedooropener'
-        @garage_doors << LiftmasterMyq::Device::GarageDoor.new(device)
+        @garage_doors << RubyMyq::Device::GarageDoor.new(device, @headers)
         # elsif device["device_type"] == "hub"
-        #     @gateways << LiftmasterMyq::Device::Gateway.new(device, self)
+        #     @gateways << RubyMyq::Device::Gateway.new(device, self)
         # elsif device["MyQDeviceTypeName"]=="???"
         # I need a MyQ light switch to implement this feature
-        # @lights << LiftmasterMyq::Device::LightSwitch.new(device)
+        # @lights << RubyMyq::Device::LightSwitch.new(device)
       end
     end
   end

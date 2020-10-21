@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require 'liftmaster_myq/version'
-require 'liftmaster_myq/system'
-require 'liftmaster_myq/device'
+require 'ruby_myq/version'
+require 'ruby_myq/system'
+require 'ruby_myq/device'
 
-module LiftmasterMyq
+module RubyMyq
   APP_ID = 'Vj8pQggXLhLy0WHahglCD4N1nAkkXQtGYpq2HrHD7H1nvmbT55KqtN6RSF4ILB%2Fi'
   LOCALE = 'en'
 

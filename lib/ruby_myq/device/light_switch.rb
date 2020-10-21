@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'liftmaster_myq/device'
+require 'ruby_myq/device'
 
-module LiftmasterMyq
+module RubyMyq
   module Device
     class LightSwitch < Base
       def on; end
