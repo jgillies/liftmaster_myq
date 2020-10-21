@@ -1,9 +1,9 @@
-module LiftmasterMyq::Device
+module RubyMyq::Device
   class Base
 
     attr_reader :id, :name, :myq_id, :myq_name, :parent_system, :cached_hash
 
-    def initialize(device_hash, parent_system)
+    def initialize(device)
       @cached_hash = device_hash
       @parent_system = parent_system
       @id = device_hash["DeviceId"]
