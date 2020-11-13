@@ -34,8 +34,6 @@ module RubyMyq
         state['last_update']
       end
 
-      private
-
       def request_door_state
         options = {
           headers: @headers,
